@@ -58,6 +58,15 @@ def train(model,loss_fn,optimizer,log_name,epochs,ese,device,
 		if num_epochs_worse == ese:
 			break
 
+		if e == 0:
+			# at epoch 0 evaluate on the validation set
+			val_acc,val_loss = validate(model, val_loader, device, loss_fn)
+			writer.add_scalar(f"val_metric/val_loss", val_loss, e)
+			writer.add_scalar(f"val_metric/val_acc", val_acc, e)
+
+			# logging
+			logger.info('Train Epoch: {}, val_acc: {:.3f}, val loss: {:.3f}'.format(e, val_acc, val_loss))
+
 		# for batch_idx, (data,target) in enumerate(train_loader):
 		for batch_idx, (data,target) in enumerate(train_loader):
 			# stop training, run on the test set
@@ -182,12 +191,13 @@ if __name__ == '__main__':
 	parser.add_argument('--logname', type=str, default='motion_blur', help='name of experiment')
 	parser.add_argument('--dataset', type=str, default='cifar10', help='(cifar10)')
 	parser.add_argument('--model_name', type=str, default='Standard', help='model architecture')
+	parser.add_argument('--corr', type=str, default='gaussian_noise', help='corruption')
 	args = parser.parse_args()
 
 	# set up training
 	init_seeds(args.seed)
-	logging_prefix = args.logname
-	log_name = args.logname+str(args.seed)
+	logging_prefix = args.corr
+	log_name = args.corr+str(args.seed)
 	logger = init_logger(f"{logging_prefix}/seed{args.seed}")
 	logger.info(args)
 	
@@ -195,8 +205,15 @@ if __name__ == '__main__':
 	model = load_model(model_name=args.model_name,dataset=args.dataset,threat_model='corruptions').eval()
 
 	for name, param in model.named_parameters():
-		if name == 'conv1.weight':
-			init.kaiming_normal_(param, mode='fan_out', nonlinearity='relu')
+		# if name == 'fc.weight':
+		# 	init.xavier_uniform_(param)
+		# if name == 'conv1.weight':
+		# 	init.kaiming_normal_(param, mode='fan_out', nonlinearity='relu')
+		
+		if name == 'bn1.weight' or name == 'block3.layer.3.bn2.weight':
+			init.ones_(param)
+		elif name == 'bn.bias' or name == 'block3.layer.3.bn2.bias':
+			init.zeros_(param)
 		else:
 			param.requires_grad = False
 			
@@ -207,7 +224,7 @@ if __name__ == '__main__':
 	lr_sch = torch.optim.lr_scheduler.CosineAnnealingLR(optimizer,args.epochs)
 	
 	# load the data
-	train_ds, val_ds, test_ds = get_cifar10c_data(['motion_blur'],1000)
+	train_ds, val_ds, test_ds = get_cifar10c_data([args.corr],1000)
 
 	logger.info(f"val_length: {len(train_ds)}")
 	logger.info(f"val_length: {len(val_ds)}")
