@@ -260,8 +260,34 @@ if __name__ == '__main__':
 						param.requires_grad = True
 				else: # freezeall other parameters
 					for param in module.parameters():
+						param.requires_grad = False	
+
+			elif args.finetune_config == "last_two_bn":
+				metrics['subset_state_dict_keys'] = ['bn1.weight','bn1.bias','block3.layer.3.bn2.weight','block3.layer.3.bn2.bias']
+				if name == 'bn1':
+					metrics['num_params'] += sum(p.numel() for p in module.parameters())
+					module.reset_parameters()
+					for param in module.parameters():
+						param.requires_grad = True
+				elif name == 'block3.layer.3.bn2':
+					metrics['num_params'] += sum(p.numel() for p in module.parameters())
+					module.reset_parameters()
+					for param in module.parameters():
+						param.requires_grad = True
+				else: # freezeall other parameters
+					for param in module.parameters():
 						param.requires_grad = False
-			
+
+			elif args.finetune_config == "last_bn":
+				metrics['subset_state_dict_keys'] = ['bn1.weight','bn1.bias']
+				if name == 'bn1':
+					metrics['num_params'] += sum(p.numel() for p in module.parameters())
+					module.reset_parameters()
+					for param in module.parameters():
+						param.requires_grad = True
+				else: # freezeall other parameters
+					for param in module.parameters():
+						param.requires_grad = False	
 
 	criterion = nn.CrossEntropyLoss()  # Softmax is internally computed.
 	optimizer = torch.optim.SGD(model.parameters(), lr=args.lr,momentum=0.9,weight_decay=1e-4)
@@ -279,11 +305,12 @@ if __name__ == '__main__':
 	dl_v = DataLoader(val_ds,batch_size=128)
 	dl_t = DataLoader(test_ds,batch_size=256)
 
-	train(model,criterion,optimizer,log_name,args.epochs,100,'cuda',dl,dl_v,logger,lr_sch,5,metrics)
+	if not args.finetune_config == 'none':	
+		train(model,criterion,optimizer,log_name,args.epochs,100,'cuda',dl,dl_v,logger,lr_sch,5,metrics)
+		checkpoint_path = os.path.join(PROJECT_ROOT,"saved_data/checkpoints",log_name) + ".pth"
+		model.load_state_dict(torch.load(checkpoint_path)['model_state_dict'],strict=False)
 	logger.info("========================= Test Results =========================")
 
-	checkpoint_path = os.path.join(PROJECT_ROOT,"saved_data/checkpoints",log_name) + ".pth"
-	model.load_state_dict(torch.load(checkpoint_path)['model_state_dict'],strict=False)
 	test_acc,test_loss = validate(model,dl_t,'cuda',criterion)
 	logger.info(f'Accuracy: {test_acc}, Loss: {test_loss}')
 

@@ -10,7 +10,7 @@ import numpy as np
 
 root_path = os.path.join(PROJECT_ROOT,"saved_data/metrics")
 
-finetune_config_list = ["fc","first_conv","last_three_bn"]
+finetune_config_list = ["none","fc","first_conv","last_bn","last_two_bn","last_three_bn"]
 corruption_list = ["frost", "gaussian_noise", "glass_blur", "contrast", "pixelate"]
 seeds = 10
 num_vals = seeds*len(corruption_list)
