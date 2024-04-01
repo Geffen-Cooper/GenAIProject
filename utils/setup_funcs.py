@@ -36,7 +36,7 @@ def init_logger(logname: str) -> logging.Logger:
         Path(os.path.join(PROJECT_ROOT,"saved_data/logs",*path_items[:-1])).mkdir(parents=True, exist_ok=True)
 
     # set the file path
-    logname = logname + "_" + datetime.datetime.fromtimestamp(time.time()).strftime('%Y-%m-%d %H:%M:%S')
+    # logname = logname + "_" + datetime.datetime.fromtimestamp(time.time()).strftime('%Y-%m-%d %H:%M:%S')
     fn = os.path.join(PROJECT_ROOT,"saved_data/logs",str(logname)+".log")
 
     logger=logging.getLogger()

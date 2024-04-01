@@ -1,34 +1,44 @@
 #!/bin/bash
 
-python train.py --batch_size=32 --lr=1e-3 --seed=1 --epochs=5 --corr=frost
-python train.py --batch_size=32 --lr=1e-3 --seed=2 --epochs=5 --corr=frost
-python train.py --batch_size=32 --lr=1e-3 --seed=3 --epochs=5 --corr=frost
-python train.py --batch_size=32 --lr=1e-3 --seed=4 --epochs=5 --corr=frost
-python train.py --batch_size=32 --lr=1e-3 --seed=5 --epochs=5 --corr=frost
-python train.py --batch_size=32 --lr=1e-3 --seed=6 --epochs=5 --corr=frost
-python train.py --batch_size=32 --lr=1e-3 --seed=7 --epochs=5 --corr=frost
-python train.py --batch_size=32 --lr=1e-3 --seed=8 --epochs=5 --corr=frost
-python train.py --batch_size=32 --lr=1e-3 --seed=9 --epochs=5 --corr=frost
-python train.py --batch_size=32 --lr=1e-3 --seed=10 --epochs=5 --corr=frost
+# Define the list of items
+corruptions=("frost" "gaussian_noise" "glass_blur" "contrast" "pixelate")
 
-python train.py --batch_size=32 --lr=1e-3 --seed=1 --epochs=5 --corr=gaussian_noise
-python train.py --batch_size=32 --lr=1e-3 --seed=2 --epochs=5 --corr=gaussian_noise
-python train.py --batch_size=32 --lr=1e-3 --seed=3 --epochs=5 --corr=gaussian_noise
-python train.py --batch_size=32 --lr=1e-3 --seed=4 --epochs=5 --corr=gaussian_noise
-python train.py --batch_size=32 --lr=1e-3 --seed=5 --epochs=5 --corr=gaussian_noise
-python train.py --batch_size=32 --lr=1e-3 --seed=6 --epochs=5 --corr=gaussian_noise
-python train.py --batch_size=32 --lr=1e-3 --seed=7 --epochs=5 --corr=gaussian_noise
-python train.py --batch_size=32 --lr=1e-3 --seed=8 --epochs=5 --corr=gaussian_noise
-python train.py --batch_size=32 --lr=1e-3 --seed=9 --epochs=5 --corr=gaussian_noise
-python train.py --batch_size=32 --lr=1e-3 --seed=10 --epochs=5 --corr=gaussian_noise
+# # Loop through each item in the list
+# for corr in "${corruptions[@]}"; do
+#     # Loop from 1 to 10
+#     for i in {1..10}; do
+#         python train.py --batch_size=32 --lr=1e-3 --corr=$corr --seed=$i --finetune_config=fc &
+#         # Limit the number of concurrent processes to 4
+#         if (( $(jobs -r -p | wc -l) >= 4 )); then
+#             wait -n
+#         fi
+#     done
+# done
+# wait
 
-python train.py --batch_size=32 --lr=1e-3 --seed=1 --epochs=5 --corr=glass_blur
-python train.py --batch_size=32 --lr=1e-3 --seed=2 --epochs=5 --corr=glass_blur
-python train.py --batch_size=32 --lr=1e-3 --seed=3 --epochs=5 --corr=glass_blur
-python train.py --batch_size=32 --lr=1e-3 --seed=4 --epochs=5 --corr=glass_blur
-python train.py --batch_size=32 --lr=1e-3 --seed=5 --epochs=5 --corr=glass_blur
-python train.py --batch_size=32 --lr=1e-3 --seed=6 --epochs=5 --corr=glass_blur
-python train.py --batch_size=32 --lr=1e-3 --seed=7 --epochs=5 --corr=glass_blur
-python train.py --batch_size=32 --lr=1e-3 --seed=8 --epochs=5 --corr=glass_blur
-python train.py --batch_size=32 --lr=1e-3 --seed=9 --epochs=5 --corr=glass_blur
-python train.py --batch_size=32 --lr=1e-3 --seed=10 --epochs=5 --corr=glass_blur
+
+# # Loop through each item in the list
+# for corr in "${corruptions[@]}"; do
+#     # Loop from 1 to 10
+#     for i in {1..10}; do
+#         python train.py --batch_size=32 --lr=1e-3 --corr=$corr --seed=$i --finetune_config=first_conv &
+#         # Limit the number of concurrent processes to 4
+#         if (( $(jobs -r -p | wc -l) >= 4 )); then
+#             wait -n
+#         fi
+#     done
+# done
+# wait
+
+# Loop through each item in the list
+for corr in "${corruptions[@]}"; do
+    # Loop from 1 to 10
+    for i in {1..10}; do
+        python train.py --batch_size=32 --lr=1e-3 --corr=$corr --seed=$i --finetune_config=last_three_bn &
+        # Limit the number of concurrent processes to 4
+        if (( $(jobs -r -p | wc -l) >= 4 )); then
+            wait -n
+        fi
+    done
+done
+wait

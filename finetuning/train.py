@@ -11,7 +11,10 @@ from tqdm import tqdm
 import os
 import time
 import argparse
+import datetime
+import json
 from pathlib import Path
+from collections import OrderedDict
 
 from datasets import *
 import sys
@@ -26,15 +29,18 @@ np.set_printoptions(linewidth=np.nan)
 
 
 def train(model,loss_fn,optimizer,log_name,epochs,ese,device,
-		  train_loader,val_loader,logger,lr_scheduler,log_freq):
+		  train_loader,val_loader,logger,lr_scheduler,log_freq,metrics):
 
 	# start tensorboard session
-	writer = SummaryWriter(os.path.join(PROJECT_ROOT,"saved_data/runs",log_name)+"_"+str(time.time()))
+	path_items = log_name.split("/")
+	if  len(path_items) > 1:
+		Path(os.path.join(PROJECT_ROOT,"saved_data/runs",*path_items[:-1])).mkdir(parents=True, exist_ok=True)
+	writer = SummaryWriter(os.path.join(PROJECT_ROOT,"saved_data/runs",*path_items))
 
 	# log training parameters
 	print("===========================================")
 	for k,v in zip(locals().keys(),locals().values()):
-		writer.add_text(f"locals/{k}", f"{v}")
+		# writer.add_text(f"locals/{k}", f"{v}")
 		logger.info(f"locals/{k} --> {v}")
 	print("===========================================")
 
@@ -44,10 +50,9 @@ def train(model,loss_fn,optimizer,log_name,epochs,ese,device,
 	model = model.to(device)
 	batch_iter = 0
 	num_epochs_worse = 0
-	checkpoint_path = os.path.join(PROJECT_ROOT,"saved_data/checkpoints",log_name) + ".pth"
-	path_items = log_name.split("/")
-	if  len(path_items) > 1:
-		Path(os.path.join(PROJECT_ROOT,"saved_data/checkpoints",*path_items[:-1])).mkdir(parents=True, exist_ok=True)
+	
+	Path(os.path.join(PROJECT_ROOT,"saved_data/checkpoints",*path_items[:-1])).mkdir(parents=True, exist_ok=True)
+	checkpoint_path = os.path.join(PROJECT_ROOT,"saved_data/checkpoints",*path_items[:-1],path_items[-1]+".pth")
 	best_val_acc = 0.0
 
 	logger.info(f"****************************************** Training Started ******************************************")
@@ -118,8 +123,8 @@ def train(model,loss_fn,optimizer,log_name,epochs,ese,device,
 
 			torch.save({
 				'epoch': e + 1,
-				'model_state_dict': model.state_dict(),
-				f"val_acc": val_acc,
+				'model_state_dict': OrderedDict((key, value) for key, value in model.state_dict().items() if key in metrics['subset_state_dict_keys']),
+				'val_acc': val_acc,
 				'val_loss': val_loss,
 			}, checkpoint_path)
 			num_epochs_worse = 0
@@ -136,7 +141,8 @@ def train(model,loss_fn,optimizer,log_name,epochs,ese,device,
 			lr_scheduler.step()
 
 	logger.info(f"Best val acc: {best_val_acc}")
-	model.load_state_dict(torch.load(checkpoint_path)['model_state_dict'])
+	metrics['best_val_acc'] = best_val_acc
+	model.load_state_dict(torch.load(checkpoint_path)['model_state_dict'],strict=False)
 	
 
 	logger.info("========================= Training Finished =========================")
@@ -182,40 +188,79 @@ def validate(model, val_loader, device, loss_fn):
 	
 
 if __name__ == '__main__':
+	script_start = time.time()
 	# ============ Argument parser ============
 	parser = argparse.ArgumentParser(description='Finetune Model')
 	parser.add_argument('--batch_size', type=int, default=32, help='batch size')
 	parser.add_argument('--lr', type=float, default=1e-3, help='learning rate')
-	parser.add_argument('--epochs', type=int, default=100, help='number of epochs')
+	parser.add_argument('--epochs', type=int, default=25, help='number of epochs')
 	parser.add_argument('--seed', type=int, default=123, help='random seed')
-	parser.add_argument('--logname', type=str, default='motion_blur', help='name of experiment')
 	parser.add_argument('--dataset', type=str, default='cifar10', help='(cifar10)')
 	parser.add_argument('--model_name', type=str, default='Standard', help='model architecture')
-	parser.add_argument('--corr', type=str, default='gaussian_noise', help='corruption')
+	parser.add_argument('--corr', type=str, default='frost', help='corruption')
+	parser.add_argument('--finetune_config',type=str,default='fc',help='which modules to finetune')
+	parser.add_argument("--checkpoint", type=str, help="Path to checkpoint file (default: None)")
 	args = parser.parse_args()
 
 	# set up training
 	init_seeds(args.seed)
-	logging_prefix = args.corr
-	log_name = args.corr+str(args.seed)
-	logger = init_logger(f"{logging_prefix}/seed{args.seed}")
+	log_name = os.path.join(args.finetune_config,args.corr,"seed"+str(args.seed)+"_"+datetime.datetime.fromtimestamp(time.time()).strftime('%Y-%m-%d %H:%M:%S'))
+	logger = init_logger(log_name)
 	logger.info(args)
+
+	# save metrics
+	path_items = log_name.split("/")
+	if  len(path_items) > 1:
+		Path(os.path.join(PROJECT_ROOT,"saved_data/metrics",*path_items[:-1])).mkdir(parents=True, exist_ok=True)
+	metrics = {'subset_state_dict_keys':None,'test_acc':0.,'train_time':0.,'num_params':0}
 	
 	# init model, loss, optimizer, learning rate schedule
 	model = load_model(model_name=args.model_name,dataset=args.dataset,threat_model='corruptions').eval()
 
-	for name, param in model.named_parameters():
-		# if name == 'fc.weight':
-		# 	init.xavier_uniform_(param)
-		# if name == 'conv1.weight':
-		# 	init.kaiming_normal_(param, mode='fan_out', nonlinearity='relu')
-		
-		if name == 'bn1.weight' or name == 'block3.layer.3.bn2.weight':
-			init.ones_(param)
-		elif name == 'bn.bias' or name == 'block3.layer.3.bn2.bias':
-			init.zeros_(param)
-		else:
-			param.requires_grad = False
+	if not args.finetune_config == 'all':
+		for name, module in model.named_modules():
+			if args.finetune_config == 'first_conv':
+				metrics['subset_state_dict_keys'] = ['conv1.weight']
+				if name == 'conv1':
+					metrics['num_params'] += sum(p.numel() for p in module.parameters())
+					module.reset_parameters()
+					for param in module.parameters():
+						param.requires_grad = True
+				else: # freezeall other parameters
+					for param in module.parameters():
+						param.requires_grad = False
+			
+			elif args.finetune_config == 'fc':
+				metrics['subset_state_dict_keys'] = ['linear.weight','linear.bias']
+				if name == 'fc':
+					metrics['num_params'] += sum(p.numel() for p in module.parameters())
+					module.reset_parameters()
+					for param in module.parameters():
+						param.requires_grad = True
+				else: # freezeall other parameters
+					for param in module.parameters():
+						param.requires_grad = False
+					
+			elif args.finetune_config == "last_three_bn":
+				metrics['subset_state_dict_keys'] = ['bn1.weight','bn1.bias','block3.layer.3.bn1.weight','block3.layer.3.bn1.bias','block3.layer.3.bn2.weight','block3.layer.3.bn2.bias']
+				if name == 'bn1':
+					metrics['num_params'] += sum(p.numel() for p in module.parameters())
+					module.reset_parameters()
+					for param in module.parameters():
+						param.requires_grad = True
+				elif name == 'block3.layer.3.bn1':
+					metrics['num_params'] += sum(p.numel() for p in module.parameters())
+					module.reset_parameters()
+					for param in module.parameters():
+						param.requires_grad = True
+				elif name == 'block3.layer.3.bn2':
+					metrics['num_params'] += sum(p.numel() for p in module.parameters())
+					module.reset_parameters()
+					for param in module.parameters():
+						param.requires_grad = True
+				else: # freezeall other parameters
+					for param in module.parameters():
+						param.requires_grad = False
 			
 
 	criterion = nn.CrossEntropyLoss()  # Softmax is internally computed.
@@ -234,10 +279,17 @@ if __name__ == '__main__':
 	dl_v = DataLoader(val_ds,batch_size=128)
 	dl_t = DataLoader(test_ds,batch_size=256)
 
-	train(model,criterion,optimizer,log_name,args.epochs,100,'cuda',dl,dl_v,logger,lr_sch,5)
+	train(model,criterion,optimizer,log_name,args.epochs,100,'cuda',dl,dl_v,logger,lr_sch,5,metrics)
 	logger.info("========================= Test Results =========================")
 
-	# checkpoint_path = os.path.join(PROJECT_ROOT,"saved_data/checkpoints",log_name) + ".pth"
-	# model.load_state_dict(torch.load(checkpoint_path)['model_state_dict'])
-	# test_acc,test_loss = validate(model,dl_t,'cuda',criterion)
-	# logger.info(f'Accuracy: {test_acc}, Loss: {test_loss}')
+	checkpoint_path = os.path.join(PROJECT_ROOT,"saved_data/checkpoints",log_name) + ".pth"
+	model.load_state_dict(torch.load(checkpoint_path)['model_state_dict'],strict=False)
+	test_acc,test_loss = validate(model,dl_t,'cuda',criterion)
+	logger.info(f'Accuracy: {test_acc}, Loss: {test_loss}')
+
+	script_end = time.time()
+	metrics['test_acc'] = test_acc
+	metrics['train_time'] = script_end-script_start
+	with open(os.path.join(PROJECT_ROOT,"saved_data/metrics",*path_items)+'.json', 'w') as f:
+		json.dump(metrics, f, indent=4)
+	
