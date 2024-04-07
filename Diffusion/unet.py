@@ -71,12 +71,12 @@ class Residual(nn.Module):
 
 def Upsample(dim, dim_out = None):
     return nn.Sequential(
-        nn.Upsample(scale_factor = 2, mode = 'nearest'),
-        nn.Conv2d(dim, default(dim_out, dim), (3,3), padding = (1,1))
+        nn.Upsample(scale_factor = (1,2), mode = 'nearest'),
+        nn.Conv2d(dim, default(dim_out, dim), (1,3), padding = (0,1))
     )
 
 def Downsample(dim, dim_out = None):
-    return nn.Conv2d(dim, default(dim_out, dim), (4,4), 2, (1,1))
+    return nn.Conv2d(dim, default(dim_out, dim), (1,4), 2, (0,1))
 
 class WeightStandardizedConv2d(nn.Conv2d):
     """
@@ -152,14 +152,14 @@ class LearnedSinusoidalPosEmb(nn.Module):
 class Block(nn.Module):
     def __init__(self, dim, dim_out, groups = 8):
         super().__init__()
-        self.proj = WeightStandardizedConv2d(dim, dim_out, (3,3), padding = (1,1))
+        self.proj = WeightStandardizedConv2d(dim, dim_out, (1,3), padding = (0,1))
         self.norm = nn.GroupNorm(groups, dim_out)
         self.act = nn.SiLU()
 
     def forward(self, x, scale_shift = None):
-        print("in:",x.shape,self.proj.padding)
+        # print("in:",x.shape,self.proj.padding)
         x = self.proj(x)
-        print("out:",x.shape)
+        # print("out:",x.shape)
         x = self.norm(x)
 
         if exists(scale_shift):
@@ -272,7 +272,7 @@ class Unet(nn.Module):
         input_channels = channels * (2 if self_condition else 1)
 
         init_dim = default(init_dim, dim)
-        self.init_conv = nn.Conv2d(input_channels, init_dim, (7,7), padding = (3,3))
+        self.init_conv = nn.Conv2d(input_channels, init_dim, (1,7), padding = (0,3))
 
         dims = [init_dim, *map(lambda m: dim * m, dim_mults)]
         in_out = list(zip(dims[:-1], dims[1:]))
@@ -312,7 +312,7 @@ class Unet(nn.Module):
                 block_klass(dim_in, dim_in, time_emb_dim = time_dim),
                 block_klass(dim_in, dim_in, time_emb_dim = time_dim),
                 Residual(PreNorm(dim_in, LinearAttention(dim_in))),
-                Downsample(dim_in, dim_out) if not is_last else nn.Conv2d(dim_in, dim_out, (3,3), padding = (1,1))
+                Downsample(dim_in, dim_out) if not is_last else nn.Conv2d(dim_in, dim_out, (1,3), padding = (0,1))
             ]))
 
         mid_dim = dims[-1]
@@ -327,7 +327,7 @@ class Unet(nn.Module):
                 block_klass(dim_out + dim_in, dim_out, time_emb_dim = time_dim),
                 block_klass(dim_out + dim_in, dim_out, time_emb_dim = time_dim),
                 Residual(PreNorm(dim_out, LinearAttention(dim_out))),
-                Upsample(dim_out, dim_in) if not is_last else  nn.Conv2d(dim_out, dim_in, (3,3), padding = (1,1))
+                Upsample(dim_out, dim_in) if not is_last else  nn.Conv2d(dim_out, dim_in, (1,3), padding = (0,1))
             ]))
 
         default_out_dim = channels * (1 if not learned_variance else 2)
@@ -355,7 +355,7 @@ class Unet(nn.Module):
         x = self.mid_block2(x, t)
 
         for block1, block2, attn, upsample in self.ups:
-            print(x.shape,h[-1].shape)
+            # print(x.shape,h[-1].shape)
             x = torch.cat((x, h.pop()), dim = 1)
             x = block1(x, t)
 
@@ -363,6 +363,7 @@ class Unet(nn.Module):
             x = block2(x, t)
             x = attn(x)
 
+            # print("before upsample")
             x = upsample(x)
 
         x = torch.cat((x, r), dim = 1)

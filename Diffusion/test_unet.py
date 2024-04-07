@@ -19,6 +19,10 @@ class ConditionalUnet(Unet):
         return super().forward_blocks(x, t)
 
 
-model = ConditionalUnet(dim=32, channels=3, num_classes=10)#.cuda()
-model(torch.randn(1,3,32,32),torch.tensor([1])).shape
-# model(torch.randn(1,1,1,1280),torch.tensor([1])).shape
+model = ConditionalUnet(dim=32, channels=1, num_classes=10)#.cuda()
+# model(torch.randn(1,3,32,32),torch.tensor([1])).shape
+import time
+
+st = time.time()
+print(model(torch.randn(128,1,1,1280),torch.tensor([1])).shape)
+print(time.time()-st)
