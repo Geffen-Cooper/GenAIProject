@@ -200,11 +200,14 @@ if __name__ == '__main__':
 	parser.add_argument('--corr', type=str, default='frost', help='corruption')
 	parser.add_argument('--finetune_config',type=str,default='fc',help='which modules to finetune')
 	parser.add_argument("--checkpoint", type=str, help="Path to checkpoint file (default: None)")
+	parser.add_argument("--logname", type=str, help="optional logname")
 	args = parser.parse_args()
 
 	# set up training
 	init_seeds(args.seed)
-	log_name = os.path.join(args.finetune_config,args.corr,"seed"+str(args.seed)+"_"+datetime.datetime.fromtimestamp(time.time()).strftime('%Y-%m-%d %H:%M:%S'))
+	if args.logname is None:
+		args.logname = args.finetune_config
+	log_name = os.path.join(args.logname,args.corr,"seed"+str(args.seed)+"_"+datetime.datetime.fromtimestamp(time.time()).strftime('%Y-%m-%d %H:%M:%S'))
 	logger = init_logger(log_name)
 	logger.info(args)
 
@@ -282,7 +285,9 @@ if __name__ == '__main__':
 				metrics['subset_state_dict_keys'] = ['bn1.weight','bn1.bias']
 				if name == 'bn1':
 					metrics['num_params'] += sum(p.numel() for p in module.parameters())
-					module.reset_parameters()
+					# module.reset_parameters()
+					nn.init.normal_(module.weight.data, mean=0, std=0.1)  # Initialize weights from a normal distribution
+					nn.init.normal_(module.bias.data, mean=0, std=0.1)
 					for param in module.parameters():
 						param.requires_grad = True
 				else: # freezeall other parameters
