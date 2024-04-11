@@ -46,7 +46,7 @@ def train(model,loss_fn,optimizer,log_name,epochs,ese,device,
 
 
 	# ================== training loop ==================
-	model.train()
+	model.eval()
 	model = model.to(device)
 	batch_iter = 0
 	num_epochs_worse = 0
@@ -56,10 +56,10 @@ def train(model,loss_fn,optimizer,log_name,epochs,ese,device,
 	best_val_acc = 0.0
 
 	logger.info(f"****************************************** Training Started ******************************************")
-
+	
 	for e in range(epochs):
-		model.train()
 		model = model.to(device)
+		
 		if num_epochs_worse == ese:
 			break
 
@@ -109,8 +109,8 @@ def train(model,loss_fn,optimizer,log_name,epochs,ese,device,
 
 		# at end of epoch evaluate on the validation set
 		val_acc,val_loss = validate(model, val_loader, device, loss_fn)
-		writer.add_scalar(f"val_metric/val_loss", val_loss, e)
-		writer.add_scalar(f"val_metric/val_acc", val_acc, e)
+		writer.add_scalar(f"val_metric/val_loss", val_loss, e+1)
+		writer.add_scalar(f"val_metric/val_acc", val_acc, e+1)
 
 		# logging
 		logger.info('Train Epoch: {}, val_acc: {:.3f}, val loss: {:.3f}'.format(e, val_acc, val_loss))
@@ -123,9 +123,9 @@ def train(model,loss_fn,optimizer,log_name,epochs,ese,device,
 
 			torch.save({
 				'epoch': e + 1,
-				'model_state_dict': OrderedDict((key, value) for key, value in model.state_dict().items() if key in metrics['subset_state_dict_keys']),
+				'model_state_dict': OrderedDict((key, value.cpu()) for key, value in model.state_dict().items() if key in metrics['subset_state_dict_keys']),
 				'val_acc': val_acc,
-				'val_loss': val_loss,
+				'val_loss': val_loss.cpu(),
 			}, checkpoint_path)
 			num_epochs_worse = 0
 		else:
@@ -193,7 +193,7 @@ if __name__ == '__main__':
 	parser = argparse.ArgumentParser(description='Finetune Model')
 	parser.add_argument('--batch_size', type=int, default=32, help='batch size')
 	parser.add_argument('--lr', type=float, default=1e-3, help='learning rate')
-	parser.add_argument('--epochs', type=int, default=25, help='number of epochs')
+	parser.add_argument('--epochs', type=int, default=10, help='number of epochs')
 	parser.add_argument('--seed', type=int, default=123, help='random seed')
 	parser.add_argument('--dataset', type=str, default='cifar10', help='(cifar10)')
 	parser.add_argument('--model_name', type=str, default='Standard', help='model architecture')

@@ -7,7 +7,7 @@ corruptions=("frost" "gaussian_noise" "glass_blur" "contrast" "pixelate")
 # for corr in "${corruptions[@]}"; do
 #     # Loop from 1 to 10
 #     for i in {1..10}; do
-#         python train.py --batch_size=32 --lr=1e-3 --corr=$corr --seed=$i --finetune_config=fc &
+#         python train.py --logname=fc_eval --batch_size=16 --lr=3e-3 --corr=$corr --seed=$i --finetune_config=fc &
 #         # Limit the number of concurrent processes to 4
 #         if (( $(jobs -r -p | wc -l) >= 4 )); then
 #             wait -n
@@ -21,7 +21,7 @@ corruptions=("frost" "gaussian_noise" "glass_blur" "contrast" "pixelate")
 # for corr in "${corruptions[@]}"; do
 #     # Loop from 1 to 10
 #     for i in {1..10}; do
-#         python train.py --batch_size=32 --lr=1e-3 --corr=$corr --seed=$i --finetune_config=first_conv &
+#         python train.py --logname=first_conv_eval --batch_size=16 --lr=3e-4 --corr=$corr --seed=$i --finetune_config=first_conv &
 #         # Limit the number of concurrent processes to 4
 #         if (( $(jobs -r -p | wc -l) >= 4 )); then
 #             wait -n
@@ -34,7 +34,7 @@ corruptions=("frost" "gaussian_noise" "glass_blur" "contrast" "pixelate")
 # for corr in "${corruptions[@]}"; do
 #     # Loop from 1 to 10
 #     for i in {1..10}; do
-#         python train.py --batch_size=32 --lr=1e-3 --corr=$corr --seed=$i --finetune_config=last_three_bn &
+#         python train.py --logname=last_three_bn_eval --batch_size=16 --lr=3e-3 --corr=$corr --seed=$i --finetune_config=last_three_bn &
 #         # Limit the number of concurrent processes to 4
 #         if (( $(jobs -r -p | wc -l) >= 4 )); then
 #             wait -n
@@ -47,7 +47,7 @@ corruptions=("frost" "gaussian_noise" "glass_blur" "contrast" "pixelate")
 # for corr in "${corruptions[@]}"; do
 #     # Loop from 1 to 10
 #     for i in {1..10}; do
-#         python train.py --batch_size=32 --lr=1e-3 --corr=$corr --seed=$i --finetune_config=none &
+#         python train.py --batch_size=16 --lr=3e-3 --corr=$corr --seed=$i --finetune_config=none &
 #         # Limit the number of concurrent processes to 4
 #         if (( $(jobs -r -p | wc -l) >= 4 )); then
 #             wait -n
@@ -60,7 +60,7 @@ corruptions=("frost" "gaussian_noise" "glass_blur" "contrast" "pixelate")
 # for corr in "${corruptions[@]}"; do
 #     # Loop from 1 to 10
 #     for i in {1..10}; do
-#         python train.py --batch_size=32 --lr=1e-3 --corr=$corr --seed=$i --finetune_config=last_two_bn &
+#         python train.py --logname=last_two_bn_eval --batch_size=16 --lr=3e-3 --corr=$corr --seed=$i --finetune_config=last_two_bn &
 #         # Limit the number of concurrent processes to 4
 #         if (( $(jobs -r -p | wc -l) >= 4 )); then
 #             wait -n
@@ -73,7 +73,7 @@ corruptions=("frost" "gaussian_noise" "glass_blur" "contrast" "pixelate")
 # for corr in "${corruptions[@]}"; do
 #     # Loop from 1 to 10
 #     for i in {1..10}; do
-#         python train.py --batch_size=32 --lr=1e-3 --corr=$corr --seed=$i --finetune_config=last_bn &
+#         python train.py --logname=last_bn_eval --batch_size=16 --lr=3e-3 --corr=$corr --seed=$i --finetune_config=last_bn &
 #         # Limit the number of concurrent processes to 4
 #         if (( $(jobs -r -p | wc -l) >= 4 )); then
 #             wait -n
@@ -81,6 +81,9 @@ corruptions=("frost" "gaussian_noise" "glass_blur" "contrast" "pixelate")
 #     done
 # done
 # wait
+
+
+
 
 
 # Create training set
@@ -99,7 +102,7 @@ corruptions=("frost" "gaussian_noise" "glass_blur" "contrast" "pixelate")
 # for corr in "${corruptions[@]}"; do
 #     # Loop from 1 to 10
 #     for i in {1..1000}; do
-#         python train.py --logname=gen_last_bn --batch_size=32 --lr=1e-3 --epochs=10 --corr=$corr --seed=$i --finetune_config=last_bn &
+#         python train.py --logname=gen_last_bn --batch_size=16 --lr=1e-3 --epochs=10 --corr=$corr --seed=$i --finetune_config=last_bn &
 #         # Limit the number of concurrent processes to 4
 #         if (( $(jobs -r -p | wc -l) >= 4 )); then
 #             wait -n
@@ -126,7 +129,7 @@ corruptions=("frost" "gaussian_noise" "glass_blur" "contrast" "pixelate")
 # echo "Total time taken: ${hours}h ${minutes}m ${seconds}s" >> "$LOG_FILE"
 
 # Log file path
-LOG_FILE="gen_data_script_log3.txt"
+LOG_FILE="gen_data_script_log4.txt"
 
 # Get the start time
 start_time=$(date +"%Y-%m-%d %H:%M:%S")
@@ -138,7 +141,7 @@ echo "Script started at: $start_time" >> "$LOG_FILE"
 for corr in "${corruptions[@]}"; do
     # Loop from 1 to 10
     for i in {1..1000}; do
-        python train.py --logname=gen_last_bn_diverse --batch_size=32 --lr=1e-3 --epochs=10 --corr=$corr --seed=$i --finetune_config=last_bn &
+        python train.py --logname=gen_last_bn_eval_diverse --batch_size=16 --lr=1e-2 --epochs=5 --corr=$corr --seed=$i --finetune_config=last_bn &
         # Limit the number of concurrent processes to 4
         if (( $(jobs -r -p | wc -l) >= 4 )); then
             wait -n

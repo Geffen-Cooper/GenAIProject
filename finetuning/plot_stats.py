@@ -10,7 +10,8 @@ import numpy as np
 
 root_path = os.path.join(PROJECT_ROOT,"saved_data/metrics")
 
-finetune_config_list = ["none","fc","first_conv","last_bn","last_two_bn","last_three_bn"]
+# finetune_config_list = ["none","fc","first_conv","last_bn","last_two_bn","last_three_bn","fc_eval","last_three_bn_eval","last_bn_eval","last_two_bn_eval","first_conv_eval","gen_last_bn_eval_diverse"]
+finetune_config_list = ["none","fc_eval","last_three_bn_eval","last_bn_eval","last_two_bn_eval","first_conv_eval"]
 corruption_list = ["frost", "gaussian_noise", "glass_blur", "contrast", "pixelate"]
 seeds = 10
 num_vals = seeds*len(corruption_list)
@@ -31,7 +32,7 @@ for config_i, config in enumerate(finetune_config_list):
                 results_dict[config]['train_times'][corr_i*seeds+seed_i-1] = metrics['train_time']/4 # we run 4 in parallel
                 results_dict[config]['num_params'] = metrics['num_params']
 
-fig,ax = plt.subplots(1,1,figsize=(8,8))
+fig,ax = plt.subplots(1,1,figsize=(6,4))
 for config_i, config in enumerate(finetune_config_list):
     ax.errorbar(results_dict[config]['num_params'],results_dict[config]['test_accs'].mean(),yerr=results_dict[config]['test_accs'].std(),capsize=4)
     ax.scatter(results_dict[config]['num_params'],results_dict[config]['test_accs'].mean(), s=results_dict[config]['train_times'].mean()*4, alpha=0.5,label=config)
@@ -43,4 +44,4 @@ ax.grid()
 ax.legend()
 ax.set_ylim((0,1))
 
-plt.savefig('metrics.png')
+plt.savefig('metrics.pdf')

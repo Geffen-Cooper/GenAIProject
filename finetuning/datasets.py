@@ -28,8 +28,8 @@ def get_cifar10c_data(corruptions,train_size):
     for i in range(len(labels.keys())):
         np.random.shuffle(labels[i])
         tr_idxs.append(labels[i][:num_ex])
-        val_idxs.append(labels[i][num_ex:num_ex+int(0.1*num_ex)])
-        test_idxs.append(labels[i][num_ex+int(0.1*num_ex):])
+        val_idxs.append(labels[i][num_ex:num_ex+int(0.2*num_ex)])
+        test_idxs.append(labels[i][num_ex+int(0.2*num_ex):])
     tr_idxs = np.concatenate(tr_idxs)
     val_idxs = np.concatenate(val_idxs)
     test_idxs = np.concatenate(test_idxs)

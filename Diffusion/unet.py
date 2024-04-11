@@ -255,7 +255,7 @@ class Unet(nn.Module):
         dim,
         init_dim = None,
         out_dim = None,
-        dim_mults=(1, 2, 4, 8),
+        dim_mults=(1, 2, 1, 1),
         channels = 3,
         self_condition = False,
         resnet_block_groups = 8,
@@ -276,6 +276,7 @@ class Unet(nn.Module):
 
         dims = [init_dim, *map(lambda m: dim * m, dim_mults)]
         in_out = list(zip(dims[:-1], dims[1:]))
+        # print(in_out)
 
         block_klass = partial(ResnetBlock, groups = resnet_block_groups)
 

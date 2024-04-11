@@ -25,4 +25,5 @@ import time
 
 st = time.time()
 print(model(torch.randn(128,1,1,1280),torch.tensor([1])).shape)
+# print(model(torch.randn(128,3,32,32),torch.tensor([1])).shape)
 print(time.time()-st)
