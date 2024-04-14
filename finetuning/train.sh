@@ -129,7 +129,7 @@ corruptions=("frost" "gaussian_noise" "glass_blur" "contrast" "pixelate")
 # echo "Total time taken: ${hours}h ${minutes}m ${seconds}s" >> "$LOG_FILE"
 
 # Log file path
-LOG_FILE="gen_data_script_log4.txt"
+LOG_FILE="gen_data_script_log5.txt"
 
 # Get the start time
 start_time=$(date +"%Y-%m-%d %H:%M:%S")
@@ -141,7 +141,7 @@ echo "Script started at: $start_time" >> "$LOG_FILE"
 for corr in "${corruptions[@]}"; do
     # Loop from 1 to 10
     for i in {1..1000}; do
-        python train.py --logname=gen_last_bn_eval_diverse --batch_size=16 --lr=1e-2 --epochs=5 --corr=$corr --seed=$i --finetune_config=last_bn &
+        python train.py --logname=gen_last_bn_eval_undiverse --batch_size=16 --lr=1e-2 --epochs=5 --corr=$corr --seed=$i --finetune_config=last_bn &
         # Limit the number of concurrent processes to 4
         if (( $(jobs -r -p | wc -l) >= 4 )); then
             wait -n

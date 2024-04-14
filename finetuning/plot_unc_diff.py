@@ -30,7 +30,7 @@ fig,ax = plt.subplots(1,1,figsize=(6,4))
 for corr_i, corr in enumerate(corruption_list):
     ax.axhline(results_dict[corr].mean(),label=corr,c=cs[corr_i],linestyle='--')
     try:
-        test_acc = np.load(os.path.join(PROJECT_ROOT,"acc"+corr+".npy"))
+        test_acc = np.load(os.path.join(PROJECT_ROOT,f"saved_data/diff_results/{corr}","acc"+corr+".npy"))
         plt.plot(test_acc,c=cs[corr_i])
     except:
         continue
@@ -40,6 +40,6 @@ ax.set_ylabel('avg. test accuracy')
 ax.grid()
 ax.legend()
 ax.set_ylim((0,0.75))
-ax.set_xlim((0,13))
+# ax.set_xlim((0,13))
 
 plt.savefig('diff.pdf')

@@ -18,14 +18,16 @@ for corr in corrs:
     model = Unet1D(
         dim = 64,
         dim_mults = (1, 2, 4, 8),
-        channels = 10
+        channels = 16
     )
 
     diffusion = GaussianDiffusion1D(
         model,
-        seq_length = 128,
+        seq_length = 80,
         timesteps = 1000,
-        objective = 'pred_v'
+        objective = 'pred_noise',
+        auto_normalize=False,
+        beta_schedule='linear'
     )
 
     root_path = os.path.expanduser(f"~/Projects/GenAIProject/saved_data/checkpoints/gen_last_bn_eval_diverse/{corr}")
@@ -34,13 +36,14 @@ for corr in corrs:
     trainer = Trainer1D(
         diffusion,
         dataset = dataset,
-        train_batch_size = 64,
-        train_lr = 8e-5,
+        train_batch_size = 32,
+        train_lr = 1e-3,
         train_num_steps = 7000,         # total training steps
-        gradient_accumulate_every = 2,    # gradient accumulation steps
+        gradient_accumulate_every = 1,    # gradient accumulation steps
         ema_decay = 0.995,                # exponential moving average decay
         amp = True,                       # turn on mixed precision
-        corr=corr
+        corr=corr,
+        results_folder=f'{corr}_results/'
     )
     trainer.train()
 

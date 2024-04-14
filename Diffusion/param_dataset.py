@@ -28,7 +28,7 @@ class ParamDataset(Dataset):
         # load params
         state_dict = torch.load(self.files[index])['model_state_dict']
         params = torch.cat([param.flatten() for param in state_dict.values()])
-        params = params.reshape((10,128))
+        params = params.reshape((16,80))
         
         # load label
         label = self.labels[index]
