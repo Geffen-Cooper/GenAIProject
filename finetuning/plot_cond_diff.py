@@ -6,6 +6,7 @@ from utils.setup_funcs import PROJECT_ROOT
 
 import matplotlib.pyplot as plt
 import numpy as np
+import pandas as pd
 
 
 root_path = os.path.join(PROJECT_ROOT,"saved_data/metrics/gen_last_bn_eval_diverse")
@@ -27,10 +28,11 @@ for corr_i, corr in enumerate(corruption_list):
 
 cs = ['r','orange','green', 'blue', 'brown']
 fig,ax = plt.subplots(1,1,figsize=(6,4))
+test_accs = pd.read_csv(os.path.join(PROJECT_ROOT,f"saved_data/cond_diff_results/acc"),index_col=False)
 for corr_i, corr in enumerate(corruption_list):
     ax.axhline(results_dict[corr].mean(),label=corr,c=cs[corr_i],linestyle='--')
     try:
-        test_acc = np.load(os.path.join(PROJECT_ROOT,f"saved_data/diff_results/{corr}_torch.Size([32, 40])","acc"+corr+".npy"))
+        test_acc = test_accs[corr].values
         plt.plot(test_acc,c=cs[corr_i])
     except:
         continue
@@ -42,5 +44,4 @@ ax.legend()
 ax.set_ylim((0,0.75))
 # ax.set_xlim((0,13))
 
-shape = "32_40"
-plt.savefig(f'diff_{shape}.pdf')
+plt.savefig(f'cond_diff.pdf')

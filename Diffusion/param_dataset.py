@@ -4,7 +4,7 @@ import os
 
 
 class ParamDataset(Dataset):
-    def __init__(self, root_dir, conditional=False):
+    def __init__(self, root_dir, conditional=False, corr_list=None):
         self.root_dir = root_dir
         self.conditional = conditional
 
@@ -20,6 +20,10 @@ class ParamDataset(Dataset):
         unique_labels = set(self.labels)
         self.label_to_int = {label_str : i for i,label_str in enumerate(unique_labels)}
         self.int_to_label = {val : key for key,val in self.label_to_int.items()}
+        
+        if corr_list is not None:
+            self.label_to_int = {corr : i for i,corr in enumerate(corr_list)}
+            self.int_to_label = {val : key for key,val in self.label_to_int.items()}
 
     def __len__(self):
         return len(self.labels)
@@ -28,7 +32,7 @@ class ParamDataset(Dataset):
         # load params
         state_dict = torch.load(self.files[index])['model_state_dict']
         params = torch.cat([param.flatten() for param in state_dict.values()])
-        params = params.reshape((16,80))
+        params = params.reshape((8,160))
         
         # load label
         label = self.labels[index]
