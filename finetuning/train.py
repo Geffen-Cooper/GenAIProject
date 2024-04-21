@@ -121,12 +121,20 @@ def train(model,loss_fn,optimizer,log_name,epochs,ese,device,
 			logger.info('Train Epoch: {}, val_acc: {:.3f}, val loss: {:.3f}'.format(e,val_acc, val_loss))
 			best_val_acc = val_acc
 
-			torch.save({
-				'epoch': e + 1,
-				'model_state_dict': OrderedDict((key, value.cpu()) for key, value in model.state_dict().items() if key in metrics['subset_state_dict_keys']),
-				'val_acc': val_acc,
-				'val_loss': val_loss.cpu(),
-			}, checkpoint_path)
+			if metrics['subset_state_dict_keys'] != 'all':
+				torch.save({
+					'epoch': e + 1,
+					'model_state_dict': OrderedDict((key, value.cpu()) for key, value in model.state_dict().items() if key in metrics['subset_state_dict_keys']),
+					'val_acc': val_acc,
+					'val_loss': val_loss.cpu(),
+				}, checkpoint_path)
+			else:
+					torch.save({
+					'epoch': e + 1,
+					'model_state_dict': model.state_dict(),
+					'val_acc': val_acc,
+					'val_loss': val_loss.cpu(),
+				}, checkpoint_path)
 			num_epochs_worse = 0
 		else:
 			logger.info(f"info: {num_epochs_worse} num epochs without improving")
@@ -293,6 +301,9 @@ if __name__ == '__main__':
 				else: # freezeall other parameters
 					for param in module.parameters():
 						param.requires_grad = False	
+	else:
+		metrics['subset_state_dict_keys'] = 'all'
+
 
 	criterion = nn.CrossEntropyLoss()  # Softmax is internally computed.
 	optimizer = torch.optim.SGD(model.parameters(), lr=args.lr,momentum=0.9,weight_decay=1e-4)
@@ -300,9 +311,12 @@ if __name__ == '__main__':
 	lr_sch = torch.optim.lr_scheduler.CosineAnnealingLR(optimizer,args.epochs)
 	
 	# load the data
-	train_ds, val_ds, test_ds = get_cifar10c_data([args.corr],1000)
+	# train_ds, val_ds, test_ds = get_cifar10c_data([args.corr],5000)
+	train_ds, val_ds, test_ds = get_cifar10c_data(["gaussian_noise","frost","contrast","pixelate","glass_blur"],1000)
+	# print(len(train_ds),len(val_ds),len(test_ds))
+	# exit()
 
-	logger.info(f"val_length: {len(train_ds)}")
+	logger.info(f"train_length: {len(train_ds)}")
 	logger.info(f"val_length: {len(val_ds)}")
 	logger.info(f"test_length: {len(test_ds)}")
 

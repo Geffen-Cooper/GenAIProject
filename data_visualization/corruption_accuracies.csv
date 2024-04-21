@@ -1,0 +1,2 @@
+,clean,gaussian_noise,shot_noise,impulse_noise,defocus_blur,glass_blur,motion_blur,zoom_blur,snow,frost,fog,brightness,contrast,elastic_transform,pixelate,jpeg_compression
+0,0.9477,0.2767,0.3429,0.2708,0.5305,0.4567,0.6524,0.5798,0.7491,0.5869,0.74,0.9069,0.533,0.7341,0.4155,0.697

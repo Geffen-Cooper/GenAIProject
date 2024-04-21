@@ -19,7 +19,7 @@ model = Unet1D(
     dim_mults = (1, 2, 2, 2),
     channels = 8,
     num_classes = 5,
-    cond_drop_prob = 0.25
+    cond_drop_prob = 0.2
 )
 # print(sum(p.numel() for p in model.parameters() if p.requires_grad)/1000000)
 # exit()
@@ -43,7 +43,7 @@ trainer = Trainer1D(
     train_lr = 3e-4,
     train_num_steps = 5000,         # total training steps
     gradient_accumulate_every = 1,    # gradient accumulation steps
-    ema_decay = 0.995,                # exponential moving average decay
+    ema_decay = 0.999,                # exponential moving average decay
     amp = True,                       # turn on mixed precision
     results_folder=f'cond_results_40/'
 )

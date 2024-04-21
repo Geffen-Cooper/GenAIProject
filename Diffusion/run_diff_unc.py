@@ -11,6 +11,12 @@ from finetuning.train import validate
 from robustbench.utils import clean_accuracy
 from robustbench.utils import load_model
 
+unet = Unet1D(dim = 16, dim_mults=(1,2,4,8), channels = 8)
+
+dummy = torch.randn(4,8,128)
+t = torch.randint(0, 10, (4,)).long()
+unet(dummy,t)
+exit()
 
 corrs = ["frost", "gaussian_noise", "glass_blur", "contrast", "pixelate"]
 

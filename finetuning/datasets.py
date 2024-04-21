@@ -17,19 +17,16 @@ def get_cifar10c_data(corruptions,train_size):
     # load relevant corruption data
     x_corr,y_corr = load_cifar10c(imgs_per_corr*len(corruptions),5,corruptions=corruptions,data_dir=os.path.expanduser('~/Projects/data/'))
 
-    labels = {}
-    num_classes = int(max(y_corr)) + 1
-    for i in range(num_classes):
-        labels[i] = (y_corr==i).nonzero().view(-1)
-    num_ex = train_size // num_classes
     tr_idxs = []
     val_idxs = []
     test_idxs = []
-    for i in range(len(labels.keys())):
-        np.random.shuffle(labels[i])
-        tr_idxs.append(labels[i][:num_ex])
-        val_idxs.append(labels[i][num_ex:num_ex+int(0.2*num_ex)])
-        test_idxs.append(labels[i][num_ex+int(0.2*num_ex):])
+    idxs = np.arange(len(x_corr))
+    for corr_i, corr in enumerate(corruptions):
+        st = corr_i*imgs_per_corr
+        en = st + train_size
+        tr_idxs.append(idxs[st:en])
+        val_idxs.append(idxs[en:en+int(0.2*train_size)])
+        test_idxs.append(idxs[en+int(0.2*train_size):st+imgs_per_corr])
     tr_idxs = np.concatenate(tr_idxs)
     val_idxs = np.concatenate(val_idxs)
     test_idxs = np.concatenate(test_idxs)
