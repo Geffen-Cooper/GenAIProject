@@ -311,7 +311,7 @@ if __name__ == '__main__':
 	lr_sch = torch.optim.lr_scheduler.CosineAnnealingLR(optimizer,args.epochs)
 	
 	# load the data
-	# train_ds, val_ds, test_ds = get_cifar10c_data([args.corr],5000)
+	# train_ds, val_ds, test_ds = get_cifar10c_data([args.corr],1000)
 	train_ds, val_ds, test_ds = get_cifar10c_data(["gaussian_noise","frost","contrast","pixelate","glass_blur"],1000)
 	# print(len(train_ds),len(val_ds),len(test_ds))
 	# exit()

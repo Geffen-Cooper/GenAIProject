@@ -163,6 +163,8 @@ saved_data/
 pretraining/data/
 pretraining/models/
 finetuning/models
+finetuning/data
 *.pt
 data_visualization/models
 data_visualization/data
+Diffusion/data

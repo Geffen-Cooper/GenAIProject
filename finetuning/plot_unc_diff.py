@@ -26,21 +26,22 @@ for corr_i, corr in enumerate(corruption_list):
             results_dict[corr][seed_i-1] = metrics['test_acc']
 
 cs = ['r','orange','green', 'blue', 'brown']
-fig,ax = plt.subplots(1,1,figsize=(6,4))
+fig,ax = plt.subplots(1,1,figsize=(6,5))
 for corr_i, corr in enumerate(corruption_list):
     ax.axhline(results_dict[corr].mean(),label=corr,c=cs[corr_i],linestyle='--')
     try:
-        test_acc = np.load(os.path.join(PROJECT_ROOT,f"saved_data/diff_results/{corr}_torch.Size([32, 40])","acc"+corr+".npy"))
+        test_acc = np.load(os.path.join(PROJECT_ROOT,f"saved_data/diff_results/{corr}_torch.Size([8, 160])","acc"+corr+".npy"))
         plt.plot(test_acc,c=cs[corr_i])
     except:
         continue
 
-ax.set_xlabel('Training Iteration (x500)')
-ax.set_ylabel('avg. test accuracy')
+ax.set_xlabel('Training Iteration (x500)',fontsize=14)
+ax.set_ylabel('avg. test accuracy',fontsize=14)
 ax.grid()
-ax.legend()
+ax.legend(fontsize=12)
 ax.set_ylim((0,0.75))
 # ax.set_xlim((0,13))
+plt.tick_params(axis='both', which='major', labelsize=14)
 
-shape = "32_40"
+shape = "8_160"
 plt.savefig(f'diff_{shape}.pdf')

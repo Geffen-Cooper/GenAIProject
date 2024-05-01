@@ -32,16 +32,17 @@ for config_i, config in enumerate(finetune_config_list):
                 results_dict[config]['train_times'][corr_i*seeds+seed_i-1] = metrics['train_time']/4 # we run 4 in parallel
                 results_dict[config]['num_params'] = metrics['num_params']
 
-fig,ax = plt.subplots(1,1,figsize=(6,4))
+fig,ax = plt.subplots(1,1,figsize=(6,5))
 for config_i, config in enumerate(finetune_config_list):
     ax.errorbar(results_dict[config]['num_params'],results_dict[config]['test_accs'].mean(),yerr=results_dict[config]['test_accs'].std(),capsize=4)
     ax.scatter(results_dict[config]['num_params'],results_dict[config]['test_accs'].mean(), s=results_dict[config]['train_times'].mean()*4, alpha=0.5,label=config)
     print(results_dict[config]['train_times'].mean())
-ax.set_xlabel('# of parameters')
-ax.set_ylabel('avg. test accuracy')
-ax.set_yticks(np.linspace(0,1,11),np.round(np.linspace(0,1,11),2))
+ax.set_xlabel('# of parameters',fontsize=14)
+ax.set_ylabel('avg. test accuracy',fontsize=14)
+ax.set_yticks(np.linspace(0,1,11),np.round(np.linspace(0,1,11),2),fontsize=14)
+ax.set_xticks(np.linspace(0,7000,8),np.round(np.linspace(0,7000,8),0).astype(int),fontsize=14)
 ax.grid()
-ax.legend()
+ax.legend(fontsize=14)
 ax.set_ylim((0,1))
 
 plt.savefig('metrics.pdf')
